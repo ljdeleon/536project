@@ -1,8 +1,10 @@
 import pandas as pd
+from greedy import compute_metric, greedy_initial_solution
 import pulp
+from pulp.apis import GUROBI_CMD
 
 # Load the dataset
-data = pd.read_csv('test data.csv')
+data = pd.read_csv('test data copy.csv')
 
 # Define constants
 MAX_WEIGHT = 45000
@@ -44,8 +46,17 @@ for j in range(MAX_CONTAINERS):
 for j in range(MAX_CONTAINERS):
     prob += pulp.lpSum([pallets[i] * x[i, j] for i in range(len(data))]) <= MAX_PALLETS * y[j]
 
+# Greedy initial solution
+data = compute_metric(data)
+greedy_solution = greedy_initial_solution(data)
+for j, orders in greedy_solution.items():
+    for order in orders:
+        order_index = order_numbers.index(order)
+        x[order_index, j].setInitialValue(1)
+    y[j].setInitialValue(1)
+
 # Solve the problem
-prob.solve()
+prob.solve(solver=GUROBI_CMD())
 
 # Output results
 print(f"Status: {pulp.LpStatus[prob.status]}")
