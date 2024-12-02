@@ -1,0 +1,55 @@
+% Read Data from CSV File
+filename = '/Users/luisdeleon/Desktop/Term project data 1a (1).csv';
+data = readtable(filename);
+tic
+% Extract order data
+order_weight = data.Weight_lbs_; 
+order_volume = data.Volume_in3_; 
+order_pallets = data.Pallets; 
+
+% Constants for container capacities
+max_weight = 45000; % Weight capacity of a container in lbs
+max_volume = 3600 * 1728; % Volume capacity of a container in cubic inches
+max_pallets = 60; % Pallet capacity of a container
+
+% Initialize variables
+remaining_orders = 1:length(order_weight); % List of order indices
+containers = {}; % Cell array to store orders assigned to each container
+container_count = 0;
+
+% Iterative packing heuristic
+while ~isempty(remaining_orders)
+    container_weight = 0;
+    container_volume = 0;
+    container_pallets = 0;
+    current_container = []; % Orders in the current container
+    
+    % Iterate through remaining orders
+    for i = length(remaining_orders):-1:1
+        order = remaining_orders(i);
+        % Check if the order fits in the container
+        if (container_weight + order_weight(order) <= max_weight) && ...
+           (container_volume + order_volume(order) <= max_volume) && ...
+           (container_pallets + order_pallets(order) <= max_pallets)
+            % Add order to the current container
+            container_weight = container_weight + order_weight(order);
+            container_volume = container_volume + order_volume(order);
+            container_pallets = container_pallets + order_pallets(order);
+            current_container = [current_container, order]; % Append order
+            remaining_orders(i) = []; % Remove order from remaining
+        end
+    end
+    
+    % Add current container to the list of containers
+    containers{end+1} = current_container; %
+    container_count = container_count + 1; % Increment container count
+end
+
+% Display results
+disp(['Optimal number of containers to be shipped per day: ', num2str(container_count)]);
+
+% Display orders in each container
+for j = 1:container_count
+    disp(['Container ', num2str(j), ' contains orders: ', mat2str(containers{j})]);
+end
+toc
